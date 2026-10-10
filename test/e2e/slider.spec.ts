@@ -159,3 +159,28 @@ test('mouse drag moves to the next slide', async ({ page }, info) => {
   await page.mouse.up()
   await expect(root.locator('.sl__dot').nth(1)).toHaveAttribute('aria-current', 'true')
 })
+
+test('thumbnail navigation follows the selection, like Splide', async ({ page }, info) => {
+  test.skip(info.project.name !== 'mobile', 'all 6 thumbnails fit on desktop')
+  await page.goto('/')
+  const thumbs = page.locator('.sl--nav')
+  await thumbs.scrollIntoViewIfNeeded()
+  await expect(thumbs).toHaveClass(/is-ready/)
+  const track = thumbs.locator('.sl__track')
+  const visible = await thumbs.locator('.sl__slide').evaluateAll(els => els.filter(el => el.getBoundingClientRect().right <= el.parentElement!.getBoundingClientRect().right + 1).length)
+  // Choose the last fully visible thumbnail: the strip must move on.
+  await thumbs.locator('.sl__thumb').nth(visible - 1).click()
+  await expect.poll(() => track.evaluate(el => el.scrollLeft)).toBeGreaterThan(0)
+  await expect(thumbs.locator('.sl__thumb').nth(visible - 1)).toBeInViewport()
+})
+
+test('mobile: no horizontal page overflow and links in slides stay tappable', async ({ page }, info) => {
+  test.skip(info.project.name !== 'mobile', 'mobile only')
+  await page.goto('/')
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0)
+  const products = page.locator('section.sl').nth(1)
+  await products.scrollIntoViewIfNeeded()
+  await expect(products).toHaveClass(/is-ready/)
+  await products.locator('.sl__slide.is-active a').first().tap()
+  await expect(page).toHaveURL(/#produkt-1$/)
+})

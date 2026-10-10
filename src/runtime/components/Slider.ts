@@ -149,11 +149,9 @@ export default defineComponent({
 
     function highlight(i: number) {
       selected.value = i
-      // Keep the selected thumbnail in view.
-      const o = options.value
-      if (i < index.value || i >= index.value + o.perPage) {
-        go(Math.min(i, maxIndex.value), 'sync')
-      }
+      // Like Splide: the navigation follows the selection (clamped at the end),
+      // so the next thumbnails come into view.
+      go(i, 'sync')
     }
 
     // ---- scroll tracking -------------------------------------------------

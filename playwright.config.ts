@@ -15,7 +15,7 @@ export default defineConfig({
   },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'], launchOptions: executablePath ? { executablePath } : {} } },
-    { name: 'mobile', use: { ...devices['Pixel 7'], launchOptions: executablePath ? { executablePath } : {} } },
+    { name: 'mobile', use: { ...devices['Pixel 7'], hasTouch: true, launchOptions: executablePath ? { executablePath } : {} } },
   ],
   webServer: {
     command: 'PORT=3123 node playground/.output/server/index.mjs',

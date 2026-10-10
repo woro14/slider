@@ -148,7 +148,16 @@
   opacity: .6;
   transition: opacity .2s;
 }
-.sl--nav .sl__slide.is-active .sl__thumb { opacity: 1; box-shadow: inset 0 0 0 3px var(--sl-accent); }
+.sl__thumb { position: relative; }
+/* Drawn on top of the image, so the selected thumbnail is visible (WCAG 1.4.11). */
+.sl__thumb::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.sl--nav .sl__slide.is-active .sl__thumb { opacity: 1; }
+.sl--nav .sl__slide.is-active .sl__thumb::after { box-shadow: inset 0 0 0 3px var(--sl-accent); }
 .sl__thumb img { display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 
 /* ---- screen-reader-only live region -------------------------------------- */
@@ -172,5 +181,5 @@
   .sl__arrow, .sl__toggle { border: 2px solid ButtonText; }
   .sl__dot::before { border-color: ButtonText; }
   .sl__dot.is-active::before { background: Highlight; }
-  .sl--nav .sl__slide.is-active .sl__thumb { outline: 3px solid Highlight; }
+  .sl--nav .sl__slide.is-active .sl__thumb::after { box-shadow: none; outline: 3px solid Highlight; outline-offset: -3px; }
 }
