@@ -1,0 +1,5 @@
+{
+  "extends": "./.nuxt/tsconfig.json",
+  "include": ["src", "test", "playwright.config.ts"],
+  "exclude": ["dist", "node_modules", "playground"]
+}

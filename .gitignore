@@ -1,0 +1,10 @@
+node_modules
+dist
+.nuxt
+.output
+playground/.nuxt
+playground/.output
+test-results
+playwright-report
+lighthouse-report*
+*.log
