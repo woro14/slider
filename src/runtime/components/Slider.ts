@@ -149,9 +149,9 @@ export default defineComponent({
 
     function highlight(i: number) {
       selected.value = i
-      // Like Splide: the navigation follows the selection (clamped at the end),
-      // so the next thumbnails come into view.
-      go(i, 'sync')
+      // Keep the selected thumbnail away from the edges, so the neighbours in
+      // both directions come into view (clamped at the start and the end).
+      go(i - Math.floor((options.value.perPage - 1) / 2), 'sync')
     }
 
     // ---- scroll tracking -------------------------------------------------

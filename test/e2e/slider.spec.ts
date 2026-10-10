@@ -184,3 +184,21 @@ test('mobile: no horizontal page overflow and links in slides stay tappable', as
   await products.locator('.sl__slide.is-active a').first().tap()
   await expect(page).toHaveURL(/#produkt-1$/)
 })
+
+test('thumbnail navigation also scrolls back when going backwards', async ({ page }, info) => {
+  test.skip(info.project.name !== 'mobile', 'all 6 thumbnails fit on desktop')
+  await page.goto('/')
+  const thumbs = page.locator('.sl--nav')
+  await thumbs.scrollIntoViewIfNeeded()
+  await expect(thumbs).toHaveClass(/is-ready/)
+  const track = thumbs.locator('.sl__track')
+  await thumbs.locator('.sl__thumb').nth(5).click()
+  await expect.poll(() => track.evaluate(el => el.scrollWidth - el.clientWidth - el.scrollLeft)).toBeLessThan(2)
+  const atEnd = await track.evaluate(el => el.scrollLeft)
+  // Slide 6 → slide 3: the strip must move back so slide 2 becomes visible again.
+  await thumbs.locator('.sl__thumb').nth(2).click()
+  await expect.poll(() => track.evaluate(el => el.scrollLeft)).toBeLessThan(atEnd - 10)
+  await expect(thumbs.locator('.sl__thumb').nth(1)).toBeInViewport({ ratio: 0.9 })
+  await thumbs.locator('.sl__thumb').nth(1).click()
+  await expect.poll(() => track.evaluate(el => el.scrollLeft)).toBeLessThan(2)
+})
