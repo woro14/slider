@@ -85,6 +85,7 @@ export default defineComponent({
 
     let syncHandle: ReturnType<typeof joinSync> | undefined
     let settleTimer: ReturnType<typeof setTimeout> | undefined
+    let movingTimer: ReturnType<typeof setTimeout> | undefined
     let programmatic = false
 
     function announce() {
@@ -124,8 +125,16 @@ export default defineComponent({
       }
 
       if (!isFade.value && track.value) {
-        programmatic = true
-        track.value.scrollTo({ left: slideOffset(next), behavior: reducedMotion.value ? 'auto' : 'smooth' })
+        const left = slideOffset(next)
+        if (Math.abs(left - track.value.scrollLeft) > 1) {
+          programmatic = true
+          // Safari cancels or snaps back a smooth scrollTo() on a mandatory
+          // scroll-snap container, so snapping is off until the scroll settles.
+          root.value?.classList.add('is-moving')
+          clearTimeout(movingTimer)
+          movingTimer = setTimeout(() => root.value?.classList.remove('is-moving'), 1500)
+          track.value.scrollTo({ left, behavior: reducedMotion.value ? 'auto' : 'smooth' })
+        }
       }
       if (next !== index.value) setIndex(next, source)
       else if (!isFade.value) programmatic = false
@@ -151,7 +160,7 @@ export default defineComponent({
     function readIndexFromScroll() {
       const el = track.value
       if (!el || isFade.value || drag) return
-      root.value?.classList.remove('is-dragging')
+      root.value?.classList.remove('is-dragging', 'is-moving')
       const atEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 2
       let best = 0
       let dist = Infinity
@@ -374,6 +383,7 @@ export default defineComponent({
     onBeforeUnmount(() => {
       clearTimeout(timer)
       clearTimeout(settleTimer)
+      clearTimeout(movingTimer)
       syncHandle?.leave()
       cleanups.forEach(fn => fn())
     })
