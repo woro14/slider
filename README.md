@@ -106,8 +106,7 @@ Selbst messen: `npm run build:playground`, den Server starten, dann `npm run lig
 
 ```bash
 npm install
-npm run dev:prepare
-npm run dev            # Playground auf http://localhost:3000
+npm run dev            # Playground auf http://localhost:3000 (generiert vorher die Nuxt-Typen)
 npm run build:playground && npm run test:e2e   # Playwright + axe, Desktop und Mobil
 ```
 

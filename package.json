@@ -13,10 +13,10 @@
   "files": ["dist"],
   "scripts": {
     "prepack": "nuxt-module-build build",
-    "dev": "nuxi dev playground",
+    "dev": "npm run dev:prepare && nuxi dev playground",
     "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxi prepare playground",
     "build": "nuxt-module-build build",
-    "build:playground": "nuxi build playground",
+    "build:playground": "npm run dev:prepare && nuxi build playground",
     "typecheck": "vue-tsc --noEmit",
     "test:e2e": "playwright test",
     "lighthouse": "node test/lighthouse.mjs"
