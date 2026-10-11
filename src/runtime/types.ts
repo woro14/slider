@@ -5,13 +5,13 @@
 export interface SliderOptions {
   /**
    * `slide`: native scroll-snap track (default).
-   * `loop`: like `slide`, but next/prev and autoplay wrap around.
+   * `loop`: endless; slides are cloned on both ends once JavaScript runs.
    * `fade`: slides are stacked and cross-faded, one per view.
    */
   type?: 'slide' | 'loop' | 'fade'
-  /** Wrap from the last slide back to the first (implied by `type: 'loop'`). */
+  /** Wrap from the last slide back to the first (not needed with `type: 'loop'`). */
   rewind?: boolean
-  /** Slides visible per page. */
+  /** Slides visible per page. Ignored with `fixedWidth` / `autoWidth`. */
   perPage?: number
   /** Slides moved per arrow click / autoplay step. Defaults to `perPage`. */
   perMove?: number
@@ -19,24 +19,58 @@ export interface SliderOptions {
   gap?: string | number
   /** Peek of the neighbouring slides, any CSS length (or `{ left, right }`). */
   padding?: string | number | { left?: string | number, right?: string | number }
+  /**
+   * Where the active slide sits: `'center'`, or a number of slides from the
+   * left edge (like Splide). Unset aligns the active slide to the left.
+   */
+  focus?: 'center' | number
   /** Index of the slide shown first. */
   start?: number
-  /** Fixed track height (any CSS length). Use with `cover` images. */
+  /** Fixed slide width (any CSS length); `perPage` is ignored. */
+  fixedWidth?: string | number
+  /** Slide width comes from its content; `perPage` is ignored. */
+  autoWidth?: boolean
+  /** Fixed slide height (any CSS length). Alias: `fixedHeight`. */
   height?: string | number
-  /** Height as a ratio of the slide width, e.g. `9 / 16`. Reserves space → no CLS. */
+  fixedHeight?: string | number
+  /** Height as a ratio of the slider width, e.g. `9 / 16`. Reserves space → no CLS. */
   heightRatio?: number
   /** Show previous/next buttons. */
   arrows?: boolean
+  /**
+   * SVG path for the arrows, drawn in a 40×40 viewBox and pointing right
+   * (like Splide). The previous arrow is mirrored. Or use the `arrow-prev` /
+   * `arrow-next` slots for any markup.
+   */
+  arrowPath?: string
   /** Show pagination dots. */
   pagination?: boolean
+  /**
+   * Pagination as an ARIA tab list: one tab stop, arrow keys / Home / End
+   * move between the dots (default, like Splide). `false` renders plain buttons.
+   */
+  paginationKeyboard?: boolean
   /** Rotate automatically. Never starts when the user prefers reduced motion. */
   autoplay?: boolean
   /** Autoplay interval in ms. */
   interval?: number
   pauseOnHover?: boolean
   pauseOnFocus?: boolean
-  /** Allow dragging with the mouse. Touch swiping is always native. */
-  drag?: boolean
+  /**
+   * Allow dragging with the mouse; touch swiping is always native.
+   * `'free'` turns off snapping (free scrolling, momentum on touch).
+   */
+  drag?: boolean | 'free'
+  /** With `drag: 'free'`: snap to the nearest slide after a mouse drag. */
+  snap?: boolean
+  /** Move with the vertical mouse wheel. */
+  wheel?: boolean
+  /** Minimum wheel delta that triggers a move. */
+  wheelMinThreshold?: number
+  /** Pause between wheel moves in ms. */
+  wheelSleep?: number
+  /** Let the page scroll on when the wheel reaches the first/last slide (default `true`). */
+  releaseWheel?: boolean
   /** Transition duration for `fade` in ms. Scrolling uses the browser's smooth scroll. */
   speed?: number
   /** Arrow keys move the slider while focus is inside it. */
@@ -64,6 +98,8 @@ export interface SliderI18n {
   play: string
   pause: string
   slideX: string
+  /** Label of the pagination tab list. */
+  select: string
 }
 
 export interface SliderApi {

@@ -29,4 +29,6 @@ img { display: block; max-width: 100%; height: auto; }
 .card { border: 1px solid #ddd; border-radius: .5rem; overflow: hidden; height: 100%; }
 .card p { margin: 0; padding: .5rem .75rem; }
 .card a { color: #0b4fd6; }
+.tag { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 1rem; border: 1px solid #888; border-radius: 999px; color: #1b1b1b; text-decoration: none; white-space: nowrap; }
+.tag:focus-visible { outline: 3px solid #1a5fff; outline-offset: 2px; }
 </style>

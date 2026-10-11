@@ -13,6 +13,7 @@ export const defaultI18n: SliderI18n = {
   play: 'Start autoplay',
   pause: 'Pause autoplay',
   slideX: 'Slide %s of %s',
+  select: 'Select a slide to show',
 }
 
 export interface ResolvedOptions {
@@ -24,15 +25,25 @@ export interface ResolvedOptions {
   padLeft: string
   padRight: string
   start: number
+  focus: 'center' | number | undefined
+  fixedWidth: string | undefined
+  autoWidth: boolean
   height: string | undefined
   heightRatio: number | undefined
   arrows: boolean
+  arrowPath: string | undefined
   pagination: boolean
+  paginationKeyboard: boolean
   autoplay: boolean
   interval: number
   pauseOnHover: boolean
   pauseOnFocus: boolean
-  drag: boolean
+  drag: boolean | 'free'
+  snap: boolean
+  wheel: boolean
+  wheelMinThreshold: number
+  wheelSleep: number
+  releaseWheel: boolean
   speed: number
   keyboard: boolean
   isNavigation: boolean
@@ -68,15 +79,26 @@ function apply(base: ResolvedOptions, input: SliderOptions): ResolvedOptions {
     }
   }
   if (input.start !== undefined) out.start = Math.max(0, Math.floor(input.start))
+  if (input.focus !== undefined) out.focus = input.focus
+  if (input.fixedWidth !== undefined) out.fixedWidth = input.fixedWidth === '' ? undefined : cssLength(input.fixedWidth)
+  if (input.autoWidth !== undefined) out.autoWidth = input.autoWidth
+  if (input.fixedHeight !== undefined) out.height = cssLength(input.fixedHeight)
   if (input.height !== undefined) out.height = cssLength(input.height)
   if (input.heightRatio !== undefined) out.heightRatio = input.heightRatio
   if (input.arrows !== undefined) out.arrows = input.arrows
+  if (input.arrowPath !== undefined) out.arrowPath = input.arrowPath
   if (input.pagination !== undefined) out.pagination = input.pagination
+  if (input.paginationKeyboard !== undefined) out.paginationKeyboard = input.paginationKeyboard
   if (input.autoplay !== undefined) out.autoplay = input.autoplay
   if (input.interval !== undefined) out.interval = input.interval
   if (input.pauseOnHover !== undefined) out.pauseOnHover = input.pauseOnHover
   if (input.pauseOnFocus !== undefined) out.pauseOnFocus = input.pauseOnFocus
   if (input.drag !== undefined) out.drag = input.drag
+  if (input.snap !== undefined) out.snap = input.snap
+  if (input.wheel !== undefined) out.wheel = input.wheel
+  if (input.wheelMinThreshold !== undefined) out.wheelMinThreshold = input.wheelMinThreshold
+  if (input.wheelSleep !== undefined) out.wheelSleep = input.wheelSleep
+  if (input.releaseWheel !== undefined) out.releaseWheel = input.releaseWheel
   if (input.speed !== undefined) out.speed = input.speed
   if (input.keyboard !== undefined) out.keyboard = input.keyboard
   if (input.isNavigation !== undefined) out.isNavigation = input.isNavigation
@@ -84,6 +106,9 @@ function apply(base: ResolvedOptions, input: SliderOptions): ResolvedOptions {
   if (out.type === 'fade') {
     out.perPage = 1
     out.perMove = 1
+    out.focus = undefined
+    out.fixedWidth = undefined
+    out.autoWidth = false
   }
   return out
 }
@@ -98,15 +123,25 @@ export function resolveOptions(input: SliderOptions = {}): ResolvedOptions {
     padLeft: '0px',
     padRight: '0px',
     start: 0,
+    focus: undefined,
+    fixedWidth: undefined,
+    autoWidth: false,
     height: undefined,
     heightRatio: undefined,
     arrows: true,
+    arrowPath: undefined,
     pagination: true,
+    paginationKeyboard: true,
     autoplay: false,
     interval: 5000,
     pauseOnHover: true,
     pauseOnFocus: true,
     drag: true,
+    snap: false,
+    wheel: false,
+    wheelMinThreshold: 0,
+    wheelSleep: 500,
+    releaseWheel: true,
     speed: 400,
     keyboard: true,
     isNavigation: false,
@@ -139,19 +174,35 @@ export function resolveBreakpoints(input: SliderOptions = {}, base = resolveOpti
   return out
 }
 
-export function pageCount(total: number, o: Pick<ResolvedOptions, 'perPage' | 'perMove'>): number {
-  if (total <= o.perPage) return 1
-  return Math.ceil((total - o.perPage) / o.perMove) + 1
+/** Slide widths are only known in the browser: no page math on the server. */
+export function measuredWidths(o: Pick<ResolvedOptions, 'fixedWidth' | 'autoWidth'>): boolean {
+  return !!o.fixedWidth || o.autoWidth
 }
 
-export function pageToIndex(page: number, total: number, o: Pick<ResolvedOptions, 'perPage' | 'perMove'>): number {
-  return Math.min(page * o.perMove, Math.max(0, total - o.perPage))
+/** Every slide can become the active one (no "last page" clamping). */
+export function anyIndex(o: Pick<ResolvedOptions, 'type' | 'focus'>): boolean {
+  return o.type === 'loop' || o.type === 'fade' || o.focus === 'center'
 }
 
-export function indexToPage(index: number, total: number, o: Pick<ResolvedOptions, 'perPage' | 'perMove'>): number {
-  const last = pageCount(total, o) - 1
-  if (index >= Math.max(0, total - o.perPage)) return last
-  return Math.min(last, Math.floor(index / o.perMove))
+/** Highest index reachable by arithmetic (server render and first client render). */
+export function arithmeticMax(total: number, o: ResolvedOptions): number {
+  if (anyIndex(o) || measuredWidths(o)) return Math.max(0, total - 1)
+  return Math.max(0, total - o.perPage)
+}
+
+export function pageCount(total: number, o: ResolvedOptions, max = arithmeticMax(total, o)): number {
+  if (total <= 1) return 1
+  if (o.type === 'loop') return Math.ceil(total / o.perMove)
+  return Math.ceil(max / o.perMove) + 1
+}
+
+export function pageToIndex(page: number, o: ResolvedOptions, max: number): number {
+  return Math.min(page * o.perMove, max)
+}
+
+export function indexToPage(index: number, o: ResolvedOptions, max: number, pages: number): number {
+  if (o.type !== 'loop' && index >= max) return pages - 1
+  return Math.min(pages - 1, Math.floor(index / o.perMove))
 }
 
 export function format(template: string, ...values: (string | number)[]): string {
@@ -160,7 +211,14 @@ export function format(template: string, ...values: (string | number)[]): string
 }
 
 function vars(o: ResolvedOptions): string {
+  // `initial` makes var() fall back to the perPage-based width again.
+  const basis = o.autoWidth ? 'auto' : o.fixedWidth ?? 'initial'
   const decl = [
+    `--sl-basis:${basis}`,
+    `--sl-snap:${o.focus === 'center' ? 'center' : 'start'}`,
+    `--sl-snap-type:${o.drag === 'free' ? 'none' : 'x mandatory'}`,
+    `--sl-focus-n:${typeof o.focus === 'number' ? o.focus : 0}`,
+    `--sl-unit:${o.fixedWidth ?? 'initial'}`,
     `--sl-per-page:${o.perPage}`,
     `--sl-gap:${o.gap}`,
     `--sl-pad-l:${o.padLeft}`,
@@ -183,7 +241,8 @@ export function rootStyle(o: ResolvedOptions): string {
  */
 export function breakpointCss(selector: string, total: number, base: ResolvedOptions, bps: ResolvedBreakpoint[]): string {
   const rule = (o: ResolvedOptions) => {
-    const pages = pageCount(total, o)
+    // With measured widths the count is only known in the browser: show all until then.
+    const pages = measuredWidths(o) ? total : pageCount(total, o)
     const show = o.pagination && pages > 1
     return `${selector}{${vars(o)};--sl-pagination:${show ? 'flex' : 'none'}}`
       + `${selector} .sl__page:nth-child(n){display:list-item}`

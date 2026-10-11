@@ -13,7 +13,10 @@ export interface SliderContext {
   selected: Ref<number>
   /** False on the server and until mounted: before that, nothing is hidden from assistive tech. */
   hydrated: Ref<boolean>
+  /** Measured visibility per slide; `null` until hydrated. */
+  visible: Ref<boolean[] | null>
   select: (index: number) => void
+  click: (index: number, e: MouseEvent) => void
 }
 
 export const sliderKey: InjectionKey<SliderContext> = Symbol('slider')

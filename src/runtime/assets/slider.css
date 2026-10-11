@@ -21,12 +21,15 @@
   display: flex;
   gap: var(--sl-gap, 0px);
   padding-inline: var(--sl-pad-l, 0px) var(--sl-pad-r, 0px);
-  scroll-padding-inline: var(--sl-pad-l, 0px) var(--sl-pad-r, 0px);
+  /* Slide width from perPage. cqw = slider width, valid for both padding and flex-basis. */
+  --sl-w: calc((100cqw - var(--sl-pad-l, 0px) - var(--sl-pad-r, 0px) - (var(--sl-per-page, 1) - 1) * var(--sl-gap, 0px)) / var(--sl-per-page, 1));
+  /* Numeric `focus`: the active slide sits n slides from the left edge. */
+  scroll-padding-inline: calc(var(--sl-pad-l, 0px) + var(--sl-focus-n, 0) * (var(--sl-unit, var(--sl-w)) + var(--sl-gap, 0px))) var(--sl-pad-r, 0px);
   /* Offset parent for the slides: offsetLeft is then relative to the track in every browser. */
   position: relative;
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  scroll-snap-type: x mandatory;
+  scroll-snap-type: var(--sl-snap-type, x mandatory);
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   margin: 0;
@@ -36,9 +39,10 @@
 .sl__track:focus-visible { outline: 3px solid var(--sl-focus); outline-offset: 2px; }
 
 .sl__slide {
-  flex: 0 0 calc((100% - (var(--sl-per-page, 1) - 1) * var(--sl-gap, 0px)) / var(--sl-per-page, 1));
+  /* `fixedWidth` / `autoWidth` override the perPage width. */
+  flex: 0 0 var(--sl-basis, var(--sl-w));
   min-width: 0;
-  scroll-snap-align: start;
+  scroll-snap-align: var(--sl-snap, start);
   /* `height`, or `heightRatio` × slider width (like Splide), else content height. */
   height: var(--sl-slide-h, auto);
   position: relative;
